@@ -9,3 +9,9 @@ def get_top_restaurantes():
     quantidade = request.args.get('quantidade', default=10, type=int)
     res = service.gerar_relatorio_top_restaurante(quantidade)
     return res
+
+@relatorio_bp.get('/relatorio/ticket-medio')
+def get_ticket_medio():
+    cidade = request.args.get('cidade', type=str)
+    res = service.gerar_relatorio_ticket_medio(cidade)
+    return res

@@ -98,3 +98,59 @@ class RelatorioService:
             return make_response(
                 jsonify({'message': 'Erro ao gerar o relatório.', 'error': str(e)})
             ), 500
+    
+    def gerar_relatorio_tp_medio_entrega(self, restaurante):
+        if not os.path.exists(CSV_PATH):
+            return make_response(
+                jsonify({'message': 'Nenhum pedido registrado ainda.'})
+            ), 404
+
+        try:
+            df = pd.read_csv(CSV_PATH, encoding="latin-1")
+            if df.empty:
+                return make_response(
+                    jsonify({'message': 'Nenhum pedido registrado ainda.'})
+                ), 404
+        
+            def tp_mediod_restaurante(restaurante):
+                    pedidos = df[df['restaurante'] == restaurante]
+                    if pedidos.empty:
+                        return make_response(
+                            jsonify({
+                                'message': f'Nenhum pedido encontrado para o restaurante: {restaurante}'
+                            })
+                        ), 404
+                    
+                    tempo_medio = pedidos['tempo_entrega'].mean()
+                    return make_response(
+                        jsonify(
+                            message=f'Tempo médio de entrega do restaurante calculado com sucesso!',
+                            data={
+                                'restaurante': restaurante,
+                                'tempo_medio': round(tempo_medio, 2)
+                            }
+                        )
+                    ), 200
+
+            if restaurante:
+                return tp_mediod_restaurante(restaurante)
+
+            tempo_medio = (
+                df.groupby("restaurante")['tempo_entrega']
+                    .mean()
+                    .reset_index()
+                    .to_dict(orient='records')
+                    )
+            res = make_response(
+                jsonify(
+                    message='Tempo médio de entrega por restaurante calculado com sucesso!',
+                    data=tempo_medio
+                )
+            ), 200
+
+            return res
+
+        except Exception as e:
+            return make_response(
+                jsonify({'message': 'Erro ao gerar o relatório.', 'error': str(e)})
+            ), 500

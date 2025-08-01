@@ -21,3 +21,10 @@ def get_tp_medio_entrega():
     restaurante = request.args.get('restaurante', type=str)
     res = service.gerar_relatorio_tp_medio_entrega(restaurante)
     return res
+
+@relatorio_bp.get('/relatorio/faturamento')
+def get_faturamento():
+    inicio = request.args.get('inicio', type=str)
+    fim = request.args.get('fim', type=str)
+    res = service.gerar_relatorio_faturamento(inicio, fim)
+    return res

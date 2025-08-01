@@ -28,3 +28,10 @@ def get_faturamento():
     fim = request.args.get('fim', type=str)
     res = service.gerar_relatorio_faturamento(inicio, fim)
     return res
+
+@relatorio_bp.get('/relatorio/pedidos-por-dia')
+def get_pedidos_dia():
+    cidade = request.args.get('cidade', type=str)
+    periodo = request.args.get('periodo', default=7, type=int)
+    res = service.gerar_relatorio_pedido_dia(cidade, periodo)
+    return res

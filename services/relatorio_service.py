@@ -154,3 +154,47 @@ class RelatorioService:
             return make_response(
                 jsonify({'message': 'Erro ao gerar o relatório.', 'error': str(e)})
             ), 500
+
+    def gerar_relatorio_faturamento(self, inicio, fim):
+        if not os.path.exists(CSV_PATH):
+            return make_response(
+                jsonify({'message': 'Nenhum pedido registrado ainda.'})
+            ), 404
+        
+        try:
+            df = pd.read_csv(CSV_PATH, encoding="latin-1")
+            if df.empty:
+                return make_response(
+                    jsonify({'message': 'Nenhum pedido registrado ainda.'})
+                ), 404
+            
+            if inicio and fim:
+                df['data_hora'] = pd.to_datetime(df['data_hora'])
+                df_filtrado = df[(df['data_hora'] >= inicio) & (df['data_hora'] <= fim)]
+
+                fat_total = df_filtrado['valor'].sum()
+                
+                return make_response(
+                    jsonify({
+                        "message": "Faturamento por periodo calculado com sucesso!",
+                        "data": {
+                            "inicio": inicio,
+                            "fim": fim,
+                            "faturamento_total": fat_total,
+                        }
+                    }))
+
+            fat = df['valor'].sum()
+
+            res = make_response(
+                    jsonify({
+                        "message": "Faturamento total calculado com sucesso!",
+                        "faturamento_total": fat,
+                        }
+                    ))
+            
+            return res
+        except Exception as e:
+            return make_response(
+                jsonify({'message': 'Erro ao gerar o relatório.', 'error': str(e)})
+            ), 500

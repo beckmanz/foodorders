@@ -1,6 +1,7 @@
 from flask import jsonify, make_response
 import pandas as pd
 import os
+from datetime import datetime, timedelta
 CSV_PATH = 'data/pedidos.csv'
 
 class RelatorioService:
@@ -194,6 +195,48 @@ class RelatorioService:
                     ))
             
             return res
+        except Exception as e:
+            return make_response(
+                jsonify({'message': 'Erro ao gerar o relatório.', 'error': str(e)})
+            ), 500
+
+    def gerar_relatorio_pedido_dia(self, cidade, periodo):
+        periodo = min(max(1, periodo), 30)
+        if not os.path.exists(CSV_PATH):
+            return make_response(
+                jsonify({'message': 'Nenhum pedido registrado ainda.'})
+            ), 404
+        try:
+            df = pd.read_csv(CSV_PATH, encoding="latin-1")
+            if df.empty:
+                return make_response(
+                    jsonify({'message': 'Nenhum pedido registrado ainda.'})
+                ), 404
+            
+            df['cidade'] = df['cidade'].str.strip().str.lower()
+            df['data_hora'] = pd.to_datetime(df['data_hora'])
+            tp_limit = datetime.now() - timedelta(days=periodo) 
+            df = df[df['data_hora'] >= tp_limit]
+
+            if cidade:
+                df = df[df['cidade'] == cidade.lower().strip()]
+            
+            pedidos_por_dia = (
+                df.groupby(df['data_hora'].dt.date)
+                .size()
+                .reset_index(name='quantidade_pedidos')
+                .rename(columns={"data_hora": 'dia'})
+                .to_dict(orient='records')
+            )
+
+            res = make_response(
+                    jsonify({
+                        'message': 'Relatório de pedidos por dia gerado com sucesso!',
+                        'data': pedidos_por_dia
+                    })), 200
+            
+            return res
+        
         except Exception as e:
             return make_response(
                 jsonify({'message': 'Erro ao gerar o relatório.', 'error': str(e)})
